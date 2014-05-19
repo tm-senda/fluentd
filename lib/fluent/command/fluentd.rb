@@ -161,27 +161,40 @@ end
 
 if winsvcinstmode = opts[:winsvcreg]
   require 'fileutils'
+  require 'win32ole'
   require "win32/service"
   require 'fluent/win32api_syncobj'
   include Win32
-  
+
   FLUENTD_WINSVC_NAME="fluentdsvc"
   FLUENTD_WINSVC_DISPLAYNAME="Fluentd Windows Service"
   FLUENTD_WINSVC_DESC="Fluentd is an event collector system."
-  
+
   case winsvcinstmode
   when 'i'
     binary_path = File.join(File.dirname(__FILE__), "..")
     ruby_path = Fluent::Win32Dll.getmodulefilename
-    
+
+    wmi = WIN32OLE.connect("winmgmts://")
+    processes = wmi.ExecQuery("select * from win32_process where ProcessId = #{$$}")
+    for process in processes
+      current_process = process
+    end
+    winsvc_args = current_process.CommandLine.
+      sub(/^\s*(")?(.*\b)?ruby(.exe)?(\s*\1)?\s*/, '').
+      sub(/(-w|--winsvcinst)\s+[iu]\s*/, '').
+      sub(/(-x|--signame)\s+[^\s]*\s*/, '').
+      sub(/(-u|--usespawn)\s*/, '').
+      gsub(/"/, '\"')
+
     Service.create(
-      :service_name => FLUENTD_WINSVC_NAME, 
+      :service_name => FLUENTD_WINSVC_NAME,
       :host => nil,
       :service_type => Service::WIN32_OWN_PROCESS,
       :description => FLUENTD_WINSVC_DESC,
       :start_type => Service::DEMAND_START,
       :error_control => Service::ERROR_NORMAL,
-      :binary_path_name => ruby_path+" -C "+binary_path+" winsvc.rb",
+      :binary_path_name => "\"#{ruby_path}\" \"#{binary_path}/winsvc.rb\" \"#{winsvc_args}\"",
       :load_order_group => "",
       :dependencies => [""],
       :display_name => FLUENTD_WINSVC_DISPLAYNAME

@@ -15,7 +15,7 @@ class FluentdService < Daemon
   def service_main
     ruby_path = Fluent::Win32Dll.getmodulefilename
     rubybin_dir = ruby_path[0, ruby_path.rindex("/")]
-    @pid=Process.spawn (rubybin_dir+"/ruby.exe '"+rubybin_dir+"/fluentd' "+Fluent::FLUENTD_OPTION_FOR_WINSVC+" -x "+INTEVENTOBJ_NAME)
+    @pid = Process.spawn("\"#{rubybin_dir}/ruby.exe\" #{ARGV[0]} -x #{INTEVENTOBJ_NAME}")
     while running?
       sleep 10
     end
