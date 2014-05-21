@@ -72,10 +72,8 @@ module Fluent
       @usespawn = opt[:usespawn]
       @signame = opt[:signame]
 
-      $platformwin = false
-      if RUBY_PLATFORM.downcase =~ /mswin(?!ce)|mingw|cygwin|bccwin/
-        $platformwin = true
-      end
+      $platformwin = RUBY_PLATFORM.downcase =~ /mswin(?!ce)|mingw|bccwin/
+
       if $platformwin
         require 'fluent/win32api_syncobj'
         ruby_path = Fluent::Win32Dll.getmodulefilename
