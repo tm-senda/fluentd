@@ -74,11 +74,6 @@ module Fluent
 
       $platformwin = RUBY_PLATFORM.downcase =~ /mswin(?!ce)|mingw|bccwin/
 
-      if $platformwin
-        require 'fluent/win32api_syncobj'
-        ruby_path = Fluent::Win32Dll.getmodulefilename
-        @rubybin_dir = ruby_path[0, ruby_path.rindex("/")]
-      end
       log_opts = {:suppress_repeated_stacktrace => opt[:suppress_repeated_stacktrace]}
       @log = LoggerInitializer.new(@log_path, @log_level, @chuser, @chgroup, log_opts)
       @finished = false
@@ -200,11 +195,15 @@ module Fluent
         end
       else
         if @usespawn == 0
-          fluentd_spawn_cmd = @rubybin_dir+"/ruby.exe '"+@rubybin_dir+"/fluentd' "
-          $fluentdargv.each{|a|
-            fluentd_spawn_cmd << (a + " ")
-          }
-          fluentd_spawn_cmd << "-u"
+          require 'win32ole'
+
+          wmi = WIN32OLE.connect("winmgmts://")
+          processes = wmi.ExecQuery("select * from win32_process where ProcessId = #{$$}")
+          for process in processes
+            current_process = process
+          end
+
+          fluentd_spawn_cmd = current_process.CommandLine + " -u"
           $log.info "spawn command to main (windows) : " + fluentd_spawn_cmd
           @main_pid = Process.spawn(fluentd_spawn_cmd)
         else
